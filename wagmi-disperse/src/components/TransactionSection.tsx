@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { Recipient, TokenInfo } from "../types";
 import DisperseAddresses from "./DisperseAddresses";
 import TransactionButton from "./TransactionButton";
@@ -19,7 +20,7 @@ interface TransactionSectionProps {
   effectiveAllowance?: bigint;
 }
 
-export default function TransactionSection({
+function TransactionSection({
   sending,
   recipients,
   token,
@@ -98,3 +99,5 @@ export default function TransactionSection({
     </>
   );
 }
+
+export default memo(TransactionSection);

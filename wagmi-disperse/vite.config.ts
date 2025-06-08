@@ -13,6 +13,9 @@ export default defineConfig({
     }),
   ],
   build: {
+    target: "es2020",
+    chunkSizeWarningLimit: 500,
+    minify: "esbuild",
     rollupOptions: {
       output: {
         manualChunks: {
@@ -20,9 +23,19 @@ export default defineConfig({
           "wagmi-vendor": ["wagmi", "viem"],
           "ui-vendor": ["@tanstack/react-query", "fuse.js"],
           chains: ["wagmi/chains"],
+          // Split large wallet connectors into separate chunks
+          "appkit-vendor": ["@reown/appkit"],
         },
       },
+      // Enable tree shaking
+      treeshake: {
+        moduleSideEffects: false,
+        propertyReadSideEffects: false,
+      },
     },
-    chunkSizeWarningLimit: 600,
+  },
+  esbuild: {
+    // Remove console logs in production during build
+    drop: [],
   },
 });

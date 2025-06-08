@@ -28,6 +28,7 @@ import {
 } from "./utils/balanceCalculations";
 import { canDeployToNetwork } from "./utils/contractVerify";
 import { parseRecipients } from "./utils/parseRecipients";
+import { scheduleAfterPaint } from "./utils/performance";
 
 function App() {
   const config = useConfig();
@@ -117,7 +118,7 @@ function App() {
 
       if (type === "ether") {
         setAppState(AppState.SELECTED_CURRENCY);
-        requestAnimationFrame(() => {
+        scheduleAfterPaint(() => {
           if (textareaRef.current?.value) {
             parseAmounts();
           }
@@ -125,7 +126,7 @@ function App() {
       } else if (type === "token") {
         if (token.address && token.decimals !== undefined && token.symbol) {
           setAppState(AppState.SELECTED_CURRENCY);
-          requestAnimationFrame(() => {
+          scheduleAfterPaint(() => {
             if (textareaRef.current?.value) {
               parseAmounts();
             }
@@ -144,16 +145,16 @@ function App() {
       setSending("token");
       setAppState(AppState.SELECTED_CURRENCY);
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (textareaRef.current) {
-            textareaRef.current.focus();
-            if (tokenInfo.decimals !== undefined) {
-              parseAmounts();
-            }
+      scheduleAfterPaint(
+        () => {
+          if (tokenInfo.decimals !== undefined) {
+            parseAmounts();
           }
-        });
-      });
+        },
+        {
+          focusElement: textareaRef.current,
+        },
+      );
     },
     [setToken, setSending, setAppState, parseAmounts],
   );

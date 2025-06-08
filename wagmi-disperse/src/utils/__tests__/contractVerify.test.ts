@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { canDeployToNetwork, getDisperseAddresses, isDisperseContract } from "../contractVerify";
+import { bytecodeCache, canDeployToNetwork, getDisperseAddresses, isDisperseContract } from "../contractVerify";
 
 // Mock deploy data
 vi.mock("../../deploy", () => ({
@@ -14,10 +14,7 @@ vi.spyOn(console, "log").mockImplementation(() => {});
 describe("isDisperseContract", () => {
   beforeEach(() => {
     // Clear the cache before each test
-    const func = isDisperseContract as typeof isDisperseContract & { cache?: Map<string, boolean> };
-    if (func.cache) {
-      func.cache.clear();
-    }
+    bytecodeCache.clear();
   });
 
   it("should return false for undefined bytecode", () => {
@@ -58,8 +55,7 @@ describe("isDisperseContract", () => {
     expect(result2).toBe(true);
 
     // Check cache exists
-    const func = isDisperseContract as typeof isDisperseContract & { cache?: Map<string, boolean> };
-    expect(func.cache?.has(bytecode)).toBe(true);
+    expect(bytecodeCache.has(bytecode)).toBe(true);
   });
 
   it("should handle partial match correctly", () => {

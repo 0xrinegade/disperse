@@ -62,51 +62,65 @@ const TransactionButton = ({
     }
   }, [isWriteError, writeError]);
 
-  // Invalidate queries after successful transactions
+  // Invalidate queries after successful transactions - optimized batching
   useEffect(() => {
     if (isConfirmed && account) {
+      const invalidationPromises: Promise<void>[] = [];
+
       if (action === "approve" || action === "deny") {
         // Invalidate allowance queries to refetch fresh data
         if (token.address && contractAddress) {
-          queryClient.invalidateQueries({
-            queryKey: [
-              "readContract",
-              {
-                address: token.address,
-                functionName: "allowance",
-                args: [account, contractAddress],
-                chainId,
-              },
-            ],
-          });
-          console.log(`[TransactionButton] Invalidated allowance queries for ${action} transaction`);
+          invalidationPromises.push(
+            queryClient.invalidateQueries({
+              queryKey: [
+                "readContract",
+                {
+                  address: token.address,
+                  functionName: "allowance",
+                  args: [account, contractAddress],
+                  chainId,
+                },
+              ],
+            }),
+          );
         }
       }
 
       if (action === "disperseToken" || action === "approve" || action === "deny") {
         // Invalidate balance queries for token transactions
         if (token.address) {
-          queryClient.invalidateQueries({
-            queryKey: [
-              "readContract",
-              {
-                address: token.address,
-                functionName: "balanceOf",
-                args: [account],
-                chainId,
-              },
-            ],
-          });
-          console.log(`[TransactionButton] Invalidated token balance queries for ${action} transaction`);
+          invalidationPromises.push(
+            queryClient.invalidateQueries({
+              queryKey: [
+                "readContract",
+                {
+                  address: token.address,
+                  functionName: "balanceOf",
+                  args: [account],
+                  chainId,
+                },
+              ],
+            }),
+          );
         }
       }
 
       if (action === "disperseEther") {
         // Invalidate ETH balance queries for ether transactions
-        queryClient.invalidateQueries({
-          queryKey: ["balance", { address: account, chainId }],
+        invalidationPromises.push(
+          queryClient.invalidateQueries({
+            queryKey: ["balance", { address: account, chainId }],
+          }),
+        );
+      }
+
+      // Batch all invalidations
+      if (invalidationPromises.length > 0) {
+        Promise.all(invalidationPromises).then(() => {
+          console.log(
+            `[TransactionButton] Batch invalidated ${invalidationPromises.length} query types for ${action} transaction`,
+          );
         });
-        console.log(`[TransactionButton] Invalidated ETH balance queries for ${action} transaction`);
       }
     }
   }, [isConfirmed, action, token.address, account, contractAddress, chainId, queryClient]);
